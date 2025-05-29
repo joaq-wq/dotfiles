@@ -1,0 +1,128 @@
+
+# Hyprland keybinds converted from bspwm + sxhkdrc by ChatGPT
+# Author: gh0stzk
+
+$mod = SUPER
+
+# Help
+bind = ALT, F1, exec, OpenApps --KeyHelp
+
+# Main Apps
+bind = $mod, RETURN, exec, OpenApps --terminal
+bind = $mod ALT, RETURN, exec, OpenApps --floating
+
+bind = $mod, SPACE, exec, OpenApps --menu
+bind = ALT, SPACE, exec, RiceSelector
+
+# Your Apps
+bind = $mod, B, exec, OpenApps --browser
+bind = $mod, E, exec, OpenApps --editor
+bind = $mod, F, exec, OpenApps --filemanager
+
+bind = $mod, Y, exec, OpenApps --yazi
+bind = $mod, V, exec, OpenApps --nvim
+bind = $mod, M, exec, OpenApps --music
+
+bind = $mod, P, exec, OpenApps --soundcontrol
+bind = $mod, T, exec, OpenApps --telegram
+bind = $mod, W, exec, OpenApps --whats
+
+bind = $mod, R, exec, RiceEditor
+
+# Rofi Applets
+bind = $mod ALT, T, exec, Term --selecterm
+bind = $mod ALT, W, exec, WallSelect
+bind = $mod ALT, A, exec, OpenApps --android
+bind = $mod ALT, N, exec, OpenApps --netmanager
+bind = $mod ALT, B, exec, OpenApps --bluetooth
+bind = $mod ALT, C, exec, OpenApps --clipboard
+bind = $mod ALT, S, exec, OpenApps --screenshot
+bind = $mod ALT, P, exec, OpenApps --powermenu
+bind = $mod ALT, L, exec, RofiLauncher --choose-style
+bind = $mod ALT, K, exec, OpenApps --keyboard
+
+# Environment Apps
+bind = $mod ALT, O, exec, OpenApps --scratch
+
+bind = , mouse:BTN_RIGHT, exec, jgmenu --csv-file=$HOME/.config/hypr/src/config/jgmenu.txt --config-file=$HOME/.config/hypr/src/config/jgmenurc
+
+bind = CTRL $mod ALT, P, exec, systemctl poweroff
+bind = CTRL $mod ALT, R, exec, systemctl reboot
+bind = CTRL $mod ALT, Q, exec, hyprctl dispatch exit
+bind = CTRL $mod ALT, L, exec, ScreenLocker
+bind = CTRL $mod ALT, K, exec, xkill
+bind = CTRL $mod ALT, S, exec, SoftReload
+
+bind = $mod ALT, H, exec, HideBar -h
+bind = $mod ALT, U, exec, HideBar -u
+
+bind = CTRL ALT, EQUAL, exec, picom-trans -c -3
+bind = CTRL ALT, MINUS, exec, picom-trans -c +3
+bind = CTRL ALT, T, exec, picom-trans -c -d
+
+bind = , XF86MonBrightnessUp, exec, Brightness up
+bind = , XF86MonBrightnessDown, exec, Brightness down
+
+bind = , XF86AudioRaiseVolume, exec, Volume --inc
+bind = , XF86AudioLowerVolume, exec, Volume --dec
+bind = , XF86AudioMute, exec, Volume --toggle
+
+bind = , XF86AudioNext, exec, MediaControl --next
+bind = , XF86AudioPrev, exec, MediaControl --previous
+bind = , XF86AudioPlay, exec, MediaControl --toggle
+bind = , XF86AudioStop, exec, MediaControl --stop
+
+# Window Management
+bind = $mod ALT, R, exec, hyprctl reload
+
+bind = $mod, X, exec, hyprctl dispatch killactive
+bind = $mod SHIFT, X, exec, hyprctl dispatch killactive
+
+bind = $mod, ESCAPE, exec, pkill -USR1 -x sxhkd && dunstify -u low -i ~/.config/hypr/src/assets/reload.svg 'sxhkd' 'Reloaded!'
+
+bind = ALT, T, exec, hyprctl dispatch togglefloating
+bind = ALT SHIFT, T, exec, hyprctl dispatch togglefloating
+bind = ALT, A, exec, hyprctl dispatch togglefloating
+bind = ALT, F, exec, hyprctl dispatch fullscreen
+
+bind = ALT, M, exec, hyprctl dispatch togglespecialworkspace
+bind = ALT, X, exec, hyprctl dispatch togglesticky
+bind = ALT, S, exec, hyprctl dispatch togglesticky
+bind = ALT, P, exec, hyprctl dispatch togglesticky
+bind = ALT, H, exec, hyprctl dispatch togglesticky
+
+bind = CTRL ALT, H, exec, hyprctl dispatch togglespecialworkspace
+
+bind = CTRL, TAB, exec, hyprctl dispatch workspace next
+
+bind = $mod, LEFT, exec, hyprctl dispatch workspace prev
+bind = $mod, RIGHT, exec, hyprctl dispatch workspace next
+
+bind = $mod, 1, exec, hyprctl dispatch workspace 1
+bind = $mod, 2, exec, hyprctl dispatch workspace 2
+bind = $mod, 3, exec, hyprctl dispatch workspace 3
+bind = $mod, 4, exec, hyprctl dispatch workspace 4
+bind = $mod, 5, exec, hyprctl dispatch workspace 5
+bind = $mod, 6, exec, hyprctl dispatch workspace 6
+bind = $mod, 7, exec, hyprctl dispatch workspace 7
+bind = $mod, 8, exec, hyprctl dispatch workspace 8
+bind = $mod, 9, exec, hyprctl dispatch workspace 9
+bind = $mod, 0, exec, hyprctl dispatch workspace 10
+
+bind = ALT, TAB, exec, rofi -theme $HOME/.config/hypr/src/rofi-themes/Windows.rasi -show window -window-thumbnail -window-hide-active-window true -kb-accept-entry '!Alt-Tab,Return' -kb-element-next 'Alt-Tab'
+
+# Move floating window
+bind = $mod SHIFT, LEFT, movefocus, l
+bind = $mod SHIFT, DOWN, movefocus, d
+bind = $mod SHIFT, UP, movefocus, u
+bind = $mod SHIFT, RIGHT, movefocus, r
+
+#KeyboardLayout
+
+bind = $mod+Shift+K exec, ~/.config/hypr/src/KeyBoardL
+
+# ScreenLocker BLuer
+bind = SUPER, L, exec, ~/.config/bspwm/src/scripts/ScreenLocker.sh
+
+# Bloquear com wallpaper do tema
+bind = SUPER SHIFT, L, exec, ~/.config/bspwm/src/scripts/ScreenLocker.sh --rice

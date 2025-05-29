@@ -1,0 +1,57 @@
+
+#!/bin/bash
+
+SCRATCHPAD_CLASS="hypr-scratchpad"
+TERM="${TERMINAL:-alacritty}"  # Usa $TERMINAL ou alacritty
+
+# Pega workspace e resolução atual via hyprctl
+workspace_json=$(hyprctl -j workspaces)
+focused_workspace=$(echo "$workspace_json" | jq '.[] | select(.focused==true)')
+ws_id=$(echo "$focused_workspace" | jq '.id')
+ws_width=$(echo "$focused_workspace" | jq '.width')
+ws_height=$(echo "$focused_workspace" | jq '.height')
+
+# Define tamanho (70% largura, 35% altura) e centraliza
+win_width=$(( ws_width * 70 / 100 ))
+win_height=$(( ws_height * 35 / 100 ))
+pos_x=$(( (ws_width - win_width) / 2 ))
+pos_y=0
+
+# Função pra pegar janela do scratchpad
+get_scratchpad_window() {
+  hyprctl -j clients | jq -r ".[] | select(.class == \"$SCRATCHPAD_CLASS\") | .address" | head -n1
+}
+
+# Função para mover e redimensionar janela
+move_resize_window() {
+  local win_id=$1
+  swaymsg "[address=$win_id]" move workspace current
+  swaymsg "[address=$win_id]" resize set "$win_width" "$win_height"
+  swaymsg "[address=$win_id]" move position "$pos_x" "$pos_y"
+  swaymsg "[address=$win_id]" focus
+}
+
+window_id=$(get_scratchpad_window)
+
+if [ -n "$window_id" ]; then
+  # Janela existe: verificar se está no workspace atual
+  ws_for_window=$(hyprctl -j clients | jq -r ".[] | select(.address == \"$window_id\") | .workspace.id")
+
+  if [ "$ws_for_window" == "$ws_id" ]; then
+    # Está visível, manda para scratchpad (workspace oculto)
+    swaymsg "[address=$window_id]" move scratchpad
+  else
+    # Está no scratchpad ou outro workspace, traz para atual e foca
+    move_resize_window "$window_id"
+  fi
+else
+  # Não existe, cria terminal novo com classe e configurações
+  $TERM --class "$SCRATCHPAD_CLASS" &
+
+  # Espera a janela abrir
+  sleep 0.5
+  window_id=$(get_scratchpad_window)
+  if [ -n "$window_id" ]; then
+    move_resize_window "$window_id"
+  fi
+fi

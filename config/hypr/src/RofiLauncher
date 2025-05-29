@@ -1,0 +1,75 @@
+#!/bin/bash
+# =============================================================
+# Author: Adaptado por ChatGPT (Original: gh0stzk)
+# Repo:   https://github.com/gh0stzk/dotfiles
+# Date:   28.05.2025
+#
+# Script Name: RofiLauncher (Hyprland Edition)
+# Description: Dynamic theme selector and launcher for Rofi
+#              Adaptado para Hyprland (Wayland)
+# =============================================================
+
+# === Paths ===
+cfgStyle="$HOME/.config/hypr/src/config/.launcher"
+styleDir="$HOME/.config/hypr/src/rofi-themes"
+rofiAssetDir="$HOME/.config/hypr/src/assets"
+
+# === Config file ===
+[ -f "$cfgStyle" ] || echo "1" > "$cfgStyle"
+read -r current_style < "$cfgStyle"
+
+# === Monitor info via hyprctl ===
+focused_monitor=$(hyprctl monitors -j | jq -r '.[] | select(.focused) | .name')
+monitor_width=$(hyprctl monitors -j | jq -r '.[] | select(.focused) | .width')
+scale=$(hyprctl monitors -j | jq -r '.[] | select(.focused) | .scale')
+
+# === DPI Calculation ===
+screen_dpi=$(echo "$scale * 96" | bc)
+screen_dpi=${screen_dpi%.*} # Remove decimal
+
+# === Icon Size ===
+icon_size=$(( (monitor_width * 11) / (${screen_dpi:-96}) ))
+rofi_override="element-icon{size:${icon_size}px;}"
+
+# === Function: Style Selector ===
+choose_launcher_style() {
+    styles=$(find "$styleDir" -type f -name 'style_*.rasi' | sed 's|.*/style_\([0-9]*\)\.rasi|\1|' | sort -n)
+
+    selected_index=-1
+    index=0
+    IFS=$'\n'
+    for style in $styles; do
+        if [ "$style" = "$current_style" ]; then
+            selected_index=$index
+            break
+        fi
+        index=$((index + 1))
+    done
+    unset IFS
+
+    selected=$(
+        for style in $styles; do
+            printf "%s\000icon\037%s/style_%s.webp\n" "$style" "$rofiAssetDir" "$style"
+        done | rofi -dmenu \
+                    -theme "$styleDir/StyleSelect.rasi" \
+                    -theme-str "$rofi_override" \
+                    -selected-row "$selected_index"
+    )
+
+    [ -n "$selected" ] && echo "${selected}" > "$cfgStyle"
+}
+
+# === Function: Launcher ===
+launch_launcher () {
+    ROFI_THEME="$styleDir/style_${current_style}.rasi"
+    rofi -show drun -theme "$ROFI_THEME"
+}
+
+# === Main ===
+case "$1" in
+    --choose-style)
+        choose_launcher_style ;;
+    --launcher | *)
+        launch_launcher ;;
+esac
+

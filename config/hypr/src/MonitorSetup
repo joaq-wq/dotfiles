@@ -1,0 +1,109 @@
+
+#!/bin/bash
+# =============================================================
+# MonitorSetupHyprland.sh
+# Dynamic multi-monitor setup for Hyprland using hyprctl
+# Author: gh0stzk + adaptado por ChatGPT
+# Date: 28.05.2025
+# =============================================================
+
+# Função para pegar lista de monitores conectados e suas infos
+get_monitors() {
+    # Saída de hyprctl monitors, linhas que começam com "Monitor:"
+    # Exemplo: Monitor: HDMI-A-1 (active) 1920x1080@60Hz pos: 0,0 scale: 1.0
+    hyprctl monitors | grep '^Monitor:' | awk '
+    {
+        # Nome do monitor na posição 2
+        name = $2;
+        # Resolução no formato WxH@Hz (posição 4)
+        split($4,res,"x");
+        resX = res[1];
+        split(res[2],hz,"@");
+        resY = hz[1];
+        rate = substr(hz[2],1,length(hz[2])-2); # remove "Hz"
+        # Posição do monitor, pos:X,Y
+        pos = substr($6,5); # remove "pos:"
+        print name, resX, resY, rate, pos
+    }'
+}
+
+# Lê monitores e salva em arrays
+mapfile -t monitors < <(get_monitors)
+
+NUM_MONITORS=${#monitors[@]}
+echo "Monitores detectados: $NUM_MONITORS"
+
+if [ $NUM_MONITORS -eq 0 ]; then
+    echo "Nenhum monitor detectado. Abortando."
+    exit 1
+fi
+
+# Extrai nomes para array separado para facilitar
+declare -a mon_names
+for ((i=0; i<$NUM_MONITORS; i++)); do
+    mon_names[i]=$(echo "${monitors[i]}" | awk '{print $1}')
+done
+
+# Função para mover e posicionar monitor via hyprctl
+move_monitor() {
+    local mon=$1
+    local posX=$2
+    local posY=$3
+    echo "Movendo monitor $mon para $posX,$posY"
+    hyprctl dispatch movemonitor "$mon" "$posX" "$posY"
+}
+
+# Função para definir monitor principal
+set_primary() {
+    local mon=$1
+    echo "Definindo monitor principal: $mon"
+    hyprctl dispatch setprimary "$mon"
+}
+
+# Função para mover workspaces para monitores (opcional)
+assign_workspaces() {
+    # Mapear workspaces 1,2,3... para monitores 0,1,2
+    local ws=1
+    for mon in "${mon_names[@]}"; do
+        echo "Atribuindo workspaces ao monitor $mon"
+        for ((j=0; j<3; j++)); do
+            hyprctl dispatch moveworkspace $ws $mon
+            ((ws++))
+        done
+    done
+}
+
+# Posição inicial dos monitores (x,y)
+# Você pode modificar o layout aqui conforme desejar
+case $NUM_MONITORS in
+    1)
+        move_monitor "${mon_names[0]}" 0 0
+        set_primary "${mon_names[0]}"
+        ;;
+    2)
+        move_monitor "${mon_names[0]}" 0 0
+        move_monitor "${mon_names[1]}" 1920 0  # supondo resolução FullHD lado direito
+        set_primary "${mon_names[0]}"
+        ;;
+    3)
+        move_monitor "${mon_names[0]}" 0 0         # central
+        move_monitor "${mon_names[1]}" -1920 0     # esquerdo
+        move_monitor "${mon_names[2]}" 1920 0      # direito
+        set_primary "${mon_names[0]}"
+        ;;
+    4)
+        move_monitor "${mon_names[0]}" 0 0         # centro
+        move_monitor "${mon_names[1]}" -1920 0     # esquerdo
+        move_monitor "${mon_names[2]}" 1920 0      # direito
+        move_monitor "${mon_names[3]}" 0 -1080     # acima
+        set_primary "${mon_names[0]}"
+        ;;
+    *)
+        echo "Mais de 4 monitores não suportado automaticamente."
+        ;;
+esac
+
+# Opcional: distribuir workspaces
+assign_workspaces
+
+echo "Setup de monitores finalizado."

@@ -1,0 +1,49 @@
+
+#!/bin/sh
+# =============================================================
+# Author:  gh0stzk
+# Repo:    https://github.com/gh0stzk/dotfiles
+# Date:    29.01.2025
+#
+# SoftReload - Dynamic reloading of graphical components (with Polybar fallback)
+# Features:
+#   ✔ Reload POLYBAR or EWW depending on which is running.
+#   ✔ Reload SXHKD and Dunst daemons and configs.
+#   ✔ Restart Eww daemon if active.
+#   ✔ Sends notification on success.
+#
+# Copyright (C) 2021-2025 gh0stzk <z0mbi3.zk@protonmail.com>
+# Licensed under GPL-3.0 license
+# =============================================================
+
+CONFIG_DIR="$HOME/.config/hypr"
+RICES_DIR="$CONFIG_DIR/rices"
+DUNST_CONFIG="$CONFIG_DIR/src/config/dunstrc"
+read -r CURRENT_RICE < "$CONFIG_DIR"/.rice
+
+reload() {
+    # Reload polybar if running, else reload eww bar
+    if pgrep -x polybar >/dev/null; then
+        polybar-msg cmd restart >/dev/null
+    else
+        eww_bar_config="$RICES_DIR/$CURRENT_RICE/bar"
+        [ -d "$eww_bar_config" ] && eww reload -c "$eww_bar_config"
+    fi
+
+    # Reload hotkeys daemon
+    pkill -USR1 -x sxhkd 2>/dev/null || true
+
+    # Reload dunst notification daemon config
+    dunstctl reload "$DUNST_CONFIG" 2>/dev/null || true
+
+    # Reload main eww widgets
+    main_eww="$CONFIG_DIR/eww"
+    if eww ping -c "$main_eww" >/dev/null 2>&1; then
+        eww reload -c "$main_eww"
+    fi
+}
+
+if reload; then
+    dunstify -i dialog-information "Environment Reloaded!" \
+    "Reloaded Settings:\n• ${CURRENT_RICE} Bar\n• SXHKD\n• Dunst\n• EWW Widgets"
+fi

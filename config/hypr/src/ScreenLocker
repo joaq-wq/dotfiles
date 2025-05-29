@@ -1,0 +1,89 @@
+#!/bin/bash
+# =============================================================
+# Author: Adaptado para Hyprland
+# Description: Lockscreen with blur or rice-based wallpaper
+# =============================================================
+
+TEMP_IMAGE="/tmp/lockscreen.png"
+
+# Colors
+bg=1a1b26FF
+fg=c0caf5FF
+ring=15161eFF
+wrong=f7768eFF
+verify=9ece6aFF
+date=c0caf5FF
+
+# Function: Default blurred lockscreen
+default_lockscreen () {
+    grim "$TEMP_IMAGE"
+    convert "$TEMP_IMAGE" -blur 0x8 "$TEMP_IMAGE"
+
+    swaylock -i "$TEMP_IMAGE" \
+        --clock --indicator \
+        --indicator-radius 130 --indicator-thickness 12 \
+        --ring-color "$ring" \
+        --inside-color "$bg" \
+        --ring-ver-color "$verify" --inside-ver-color "$verify" \
+        --ring-wrong-color "$wrong" --inside-wrong-color "$wrong" \
+        --key-hl-color "$verify" --bs-hl-color "$wrong" \
+        --separator-color "$ring" \
+        --text-color "$fg" --date-color "$date" --layout-color "$fg" \
+        --time-color "$date" \
+        --line-color "$ring" \
+        --effect-blur 8x8 \
+        --effect-vignette 0.5:0.5 \
+        --fade-in 0.3
+}
+
+# Function: Rice wallpaper lockscreen
+rice_lockscreen () {
+    RICE=$(<"$HOME/.config/hypr/.rice")
+    image_dir="$HOME/.config/hypr/rices/${RICE}/walls"
+
+    lock_image=$(find "$image_dir" -type f \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" -o -iname "*.webp" \) | shuf -n 1)
+
+    if [[ -z "$lock_image" ]]; then
+        echo "No wallpaper found in $image_dir"
+        exit 1
+    fi
+
+    convert "$lock_image" "$TEMP_IMAGE"
+
+    swaylock -i "$TEMP_IMAGE" \
+        --clock --indicator \
+        --indicator-radius 130 --indicator-thickness 12 \
+        --ring-color "$ring" \
+        --inside-color "$bg" \
+        --ring-ver-color "$verify" --inside-ver-color "$verify" \
+        --ring-wrong-color "$wrong" --inside-wrong-color "$wrong" \
+        --key-hl-color "$verify" --bs-hl-color "$wrong" \
+        --separator-color "$ring" \
+        --text-color "$fg" --date-color "$date" --layout-color "$fg" \
+        --time-color "$date" \
+        --line-color "$ring" \
+        --effect-blur 3x3 \
+        --fade-in 0.3
+}
+
+# Help menu
+show_help() {
+    echo -e "ScreenLocker [options]
+Note: If an option is not specified, the screen locks with a screenshot with a blur effect.
+
+Options:
+  -r, --rice    Lock screen with random wallpaper from current rice theme.
+  -h, --help    Show this help message.
+"
+}
+
+# Main
+case $1 in
+    -r|--rice)
+        rice_lockscreen ;;
+    -h|--help)
+        show_help ;;
+    *)
+        default_lockscreen ;;
+esac
+

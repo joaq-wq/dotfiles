@@ -1,0 +1,33 @@
+
+#!/bin/sh
+# =============================================================
+# Author: gh0stzk
+# Repo: https://github.com/gh0stzk/dotfiles
+# Date: 2025-05-28
+#
+# Script Name: PowerMenu for Hyprland
+# Description: Minimalist system power control menu for Hyprland
+# =============================================================
+
+options="󰍁
+
+󰗽
+󰜉
+󰐥"
+
+rofi_cmd() {
+	rofi -dmenu \
+		-p "Goodbye ${USER}" \
+		-mesg "Uptime: $(uptime -p | sed -e 's/up //g')" \
+		-theme "$HOME"/.config/hypr/rofi-themes/PowerMenu.rasi
+}
+
+chosen=$(printf "%s\n" "$options" | rofi_cmd)
+
+case $chosen in
+    "󰐥") systemctl poweroff ;;
+    "󰜉") systemctl reboot ;;
+    "󰍁") hyprlock ;;  # Substitua por swaylock, gtklock, ou seu locker
+    "") systemctl suspend ;;
+    "󰗽") hyprctl dispatch exit ;;
+esac

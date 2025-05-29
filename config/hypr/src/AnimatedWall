@@ -1,0 +1,69 @@
+
+#!/bin/sh
+# =============================================================
+# Author:  gh0stzk
+# Repo:    https://github.com/gh0stzk/dotfiles
+# Date:    24.04.2025
+#
+# AnimateWall - Animated Wallpaper for Hyprland
+# Info:  Script to set animated backgrounds using mpvpaper.
+#
+# Dependencies:
+#   → mpvpaper
+#   → mpv
+#
+# Copyright (C) 2021-2025 gh0stzk <z0mbi3.zk@protonmail.com>
+# Licensed under GPL-3.0 license
+# =============================================================
+
+start() {
+    video_path="$1"
+
+    case "$video_path" in
+        *.mp4|*.mkv|*.gif) ;;
+        *)
+            echo "[-] Invalid video file extension"
+            exit 1
+            ;;
+    esac
+
+    # Get all monitors using Hyprland's IPC
+    MONITORS=$(hyprctl monitors | awk '/Monitor/ {getline; print $2}')
+
+    for monitor in $MONITORS; do
+        mpvpaper -o "--loop --no-audio --really-quiet" "$monitor" "$video_path" &
+    done
+}
+
+stop() {
+    pkill mpvpaper
+}
+
+print_help() {
+    echo "Usage: AnimateWall [--start] [--stop] video_path"
+    echo "    --start   Start animated wallpaper."
+    echo "    --stop    Stop animated wallpaper."
+}
+
+if [ "$#" -eq 0 ]; then
+    print_help
+    exit 1
+fi
+
+while [ "$#" -gt 0 ]; do
+    case $1 in
+        --start)
+            shift
+            start "$1"
+            shift
+            ;;
+        --stop)
+            shift
+            stop
+            ;;
+        *)
+            echo "Unknown parameter: $1"
+            exit 1
+            ;;
+    esac
+done

@@ -1,0 +1,95 @@
+#!/bin/sh
+# =============================================================
+# Author:  gh0stzk (adaptado para Hyprland)
+# Date:    28.05.2025
+
+# WallSelect - Dynamic wallpaper selector adapted for Hyprland
+# =============================================================
+
+# Variáveis principais
+read -r current_rice <"$HOME/.config/bspwm/.rice"
+wall_dir="$HOME/.config/bspwm/rices/$current_rice/walls"
+cacheDir="$HOME/.cache/$USER/$current_rice"
+
+# Cria cache se não existir
+[ -d "$cacheDir" ] || mkdir -p "$cacheDir"
+
+# Pega o monitor focado pelo hyprctl
+focused_monitor=$(hyprctl monitors | grep -A 5 "focused: yes" | grep "name:" | awk '{print $2}')
+
+# Pega resolução do monitor focado pelo hyprctl
+monitor_width=$(hyprctl monitors | grep -A 5 "name: $focused_monitor" | grep "resolution:" | awk '{print $2}' | cut -d'x' -f1)
+
+# DPI padrão (Wayland geralmente usa 96 ou 160, ajustar se quiser)
+screen_dpi=96
+
+# Calcula o tamanho do ícone
+icon_size=$(( (monitor_width * 14) / screen_dpi ))
+rofi_override="element-icon{size:${icon_size}px;}"
+rofi_command="rofi -dmenu -theme $HOME/.config/bspwm/src/rofi-themes/WallSelect.rasi -theme-str $rofi_override"
+
+# Função para obter o número de jobs paralelos
+get_optimal_jobs() {
+    cores=$(nproc)
+    if [ "$cores" -le 2 ]; then
+        echo 2
+    elif [ "$cores" -gt 4 ]; then
+        echo 4
+    else
+        echo $((cores - 1))
+    fi
+}
+
+PARALLEL_JOBS=$(get_optimal_jobs)
+
+process_func_def='process_image() {
+    imagen="$1"
+    nombre_archivo=$(basename "$imagen")
+    cache_file="${cacheDir}/${nombre_archivo}"
+    md5_file="${cacheDir}/.${nombre_archivo}.md5"
+    lock_file="${cacheDir}/.lock_${nombre_archivo}"
+    current_md5=$(xxh64sum "$imagen" | cut -d " " -f1)
+    (
+        flock -x 9
+        if [ ! -f "$cache_file" ] || [ ! -f "$md5_file" ] || [ "$current_md5" != "$(cat "$md5_file" 2>/dev/null)" ]; then
+            magick "$imagen" -resize 500x500^ -gravity center -extent 500x500 "$cache_file"
+            echo "$current_md5" > "$md5_file"
+        fi
+        rm -f "$lock_file"
+    ) 9>"$lock_file"
+}'
+
+export process_func_def cacheDir wall_dir
+
+rm -f "${cacheDir}"/.lock_* 2>/dev/null || true
+
+find "$wall_dir" -type f \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" -o -iname "*.webp" \) -print0 | \
+    xargs -0 -P "$PARALLEL_JOBS" -I {} sh -c "$process_func_def; process_image \"{}\""
+
+# Remove cache orfãos
+for cached in "$cacheDir"/*; do
+    [ -f "$cached" ] || continue
+    original="${wall_dir}/$(basename "$cached")"
+    if [ ! -f "$original" ]; then
+        nombre_archivo=$(basename "$cached")
+        rm -f "$cached" \
+            "${cacheDir}/.${nombre_archivo}.md5" \
+            "${cacheDir}/.lock_${nombre_archivo}"
+    fi
+done
+
+rm -f "${cacheDir}"/.lock_* 2>/dev/null || true
+
+# Lança o rofi para seleção
+wall_selection=$(find "${wall_dir}" -type f \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" -o -iname "*.webp" \) -print0 |
+    xargs -0 basename -a |
+    LC_ALL=C sort |
+    while IFS= read -r A; do
+        printf '%s\000icon\037%s/%s\n' "$A" "$cacheDir" "$A"
+    done | $rofi_command)
+
+# Aplica o wallpaper com hyprpaper (Wayland)
+if [ -n "$wall_selection" ]; then
+    hyprpaper wallpaper "$wall_dir/$wall_selection"
+fi
+

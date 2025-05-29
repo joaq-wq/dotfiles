@@ -1,0 +1,25 @@
+#!/bin/sh
+# Script simples para esconder/mostrar eww bars no Hyprland
+
+eww_bar_path="$HOME/.config/hyprland/src/HideBar"  # ajuste conforme seu caminho real
+
+toggle_bar() {
+    action="$1"
+    if [ "$action" = "hide" ]; then
+        eww -c "$eww_bar_path" close-all
+    else
+        monitors=$(hyprctl monitors | grep Monitor | awk '{print $3}')
+        count=0
+        for m in $monitors; do
+            eww -c "$eww_bar_path" open bar --id "$m" --screen "$count"
+            count=$((count + 1))
+        done
+    fi
+}
+
+case "$1" in
+    -h|--hide)   toggle_bar hide ;;
+    -u|--unhide) toggle_bar unhide ;;
+    *) echo "Uso: $0 [-h|--hide] [-u|--unhide]" ;;
+esac
+
