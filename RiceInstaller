@@ -104,7 +104,7 @@ welcome() {
   ${BLD}${CGR}[${CYE}i${CGR}]${CNC} 2 Repositories will be installed. ${CBL}gh0stzk-dotfiles${CNC} and ${CBL}Chaotic-Aur${CNC}
   ${BLD}${CGR}[${CYE}i${CGR}]${CNC} Check necessary dependencies and install them
   ${BLD}${CGR}[${CYE}i${CGR}]${CNC} Download my dotfiles in ${HOME}/dotfiles
-  ${BLD}${CGR}[${CYE}i${CGR}]${CNC} Backup of possible existing configurations (bspwm, polybar, etc...)
+  ${BLD}${CGR}[${CYE}i${CGR}]${CNC} Backup of possible existing configurations (hypr, polybar, etc...)
   ${BLD}${CGR}[${CYE}i${CGR}]${CNC} Install my configuration
   ${BLD}${CGR}[${CYE}i${CGR}]${CNC} Enabling MPD service (Music player daemon)
   ${BLD}${CGR}[${CYE}i${CGR}]${CNC} Change your shell to zsh shell
@@ -233,7 +233,13 @@ install_dependencies() {
     sudo pacman -Syy
 
     # List of dependencies
-    dependencies="alacritty base-devel bat brightnessctl bspwm clipcat dunst eza feh fzf thunar tumbler gvfs-mtp firefox geany git imagemagick jq jgmenu kitty libwebp maim mpc mpd mpv neovim ncmpcpp npm pamixer pacman-contrib papirus-icon-theme picom playerctl polybar lxsession-gtk3 python-gobject redshift rofi rustup sxhkd tmux xclip xdg-user-dirs xdo xdotool xsettingsd xorg-xdpyinfo xorg-xkill xorg-xprop xorg-xrandr xorg-xsetroot xorg-xwininfo yazi zsh zsh-autosuggestions zsh-history-substring-search zsh-syntax-highlighting ttf-inconsolata ttf-jetbrains-mono ttf-jetbrains-mono-nerd ttf-terminus-nerd ttf-ubuntu-mono-nerd webp-pixbuf-loader"
+dependencies="alacritty kitty foot zsh zsh-autosuggestions zsh-history-substring-search zsh-syntax-highlighting \
+base-devel git jq rustup npm geany neovim tmux \
+brightnessctl xdg-user-dirs gvfs-mtp tumbler thunar yazi clipcat eza bat \
+mpv mpd mpc ncmpcpp pamixer playerctl firefox \
+papirus-icon-theme ttf-inconsolata ttf-jetbrains-mono ttf-jetbrains-mono-nerd ttf-terminus-nerd ttf-ubuntu-mono-nerd webp-pixbuf-loader \
+grim slurp wl-clipboard swappy swaylock-effects hyprlock mpvpaper dunst wlogout \
+rofi-wayland swww waybar redshift"
 
     printf "\n%b\n\n" "${BLD}${CBL}Checking for required packages...${CNC}"
     sleep 2
@@ -544,7 +550,7 @@ backup_existing_config() {
         fi
     }
 
-    config_folders="bspwm alacritty clipcat picom rofi eww sxhkd dunst kitty polybar geany gtk-3.0 ncmpcpp yazi tmux zsh mpd paru"
+    config_folders="hypr alacritty clipcat picom rofi eww sxhkd dunst kitty polybar geany gtk-3.0 ncmpcpp yazi tmux zsh mpd paru"
 
     for folder in $config_folders; do
         backup_item d "$HOME/.config/$folder" "$folder"
@@ -714,7 +720,7 @@ install_dotfiles() {
 configure_services() {
     clear
     logo "Configuring Services"
-    picom_config="$HOME/.config/bspwm/src/config/picom.conf"
+    picom_config="$HOME/.config/hypr/src/config/picom.conf"
     sleep 2
 
     # MPD Service Management
